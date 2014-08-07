@@ -26,8 +26,11 @@ Easy :).
 Initialize sets up all the data UAUnity will need to know for every log call. **This function must be called!**
 
 **string tackingId** - This is your Universal Analytics tracking id, of the form UA-12345678-9.
+
 **string applicationName** - The name of your application as set for Universal Analytics.
+
 **string applicationVersion** - The version of your application, format can be anything you want.
+
 **string clientId** - The identification of the installed application. NOTE! This is not the user id (that isn't supported yet)! This is the id of specific installed application. On installation you could generate a GUID and pass that here every time. If no value is specific then a GUID is generated resulting in effectively a play session id. This value is ignored for web player which uses a session id.
 
 `bool UniversalAnalytics.initialized`
@@ -45,6 +48,7 @@ If this is set to true then UAUnity will attach itself to log information inside
 ### Events ###
 
 `void UniversalAnalytics.LogEvent(string category, string action, string label, int value = 0)
+
 void UniversalAnalytics.LogEvent(string category, string action, int value = 0)`
 
 Log Universal Analytics events. 
@@ -53,6 +57,7 @@ https://developers.google.com/analytics/devguides/collection/analyticsjs/events
 ### Timing ###
 
 `void LogTiming(string category, string variableName, string label, int timeInMS)
+
 void LogTiming(string category, string variableName, int timeInMS)`
 
 Log Universal Analytics timing events. 
@@ -61,6 +66,7 @@ https://developers.google.com/analytics/devguides/collection/analyticsjs/user-ti
 ### Dimensions and Metrics ###
 
 `void AddDimension(int index, string value)
+
 void AddMetric(int index, int value)`
 
 Add Universal Analytics dimensions and metrics to the next log.
