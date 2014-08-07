@@ -5,13 +5,11 @@ Latest version (dev): [0.1.0b](https://github.com/cjddmut/UniversalAnalyticsForU
 
 ============================
 
-UAUnity provides an script interface to logging data for Google's [Universal Analytics](https://developers.google.com/analytics/). For UAUnity, when creating the new property, track it as a mobile app.
-
-From this process you 
+UAUnity provides a script interface to logging data for Google's [Universal Analytics](https://developers.google.com/analytics/).
 
 ## Setup
 
-First you'll have to [set up an account](https://support.google.com/analytics/answer/2817075?hl=en) with Google's Universal Analytics. Once you have a tracking id and application name, you are ready to start using UAUnity!
+First you'll have to [set up an account](https://support.google.com/analytics/answer/2817075?hl=en) with Google's Universal Analytics. Be sure to set up the property that you are tacking as a mobile app instead of a website, this way you can have an application name. Once you have a tracking id and application name, you are ready to start using UAUnity!
 
 Make sure UniversalAnalytics.cs exists somewhere in your project and invoke UniversalAnalytics.Initialize(trackingId, appName) at least once during runtime before any logging.
 
@@ -37,7 +35,7 @@ Initialize sets up all the data UAUnity will need to know for every log call. **
 
 **string applicationVersion** - The version of your application, format can be anything you want.
 
-**string clientId** - The identification of the installed application. NOTE! This is not the user id (that isn't supported yet)! This is the id of specific installed application. On installation you could generate a GUID and pass that here every time. If no value is specific then a GUID is generated resulting in effectively a play session id. This value is ignored for web player which uses a session id.
+**string clientId** - The identification of the installed application. NOTE! This is not the user id (that isn't supported yet)! This is the id of specific installed application. On installation you could generate a GUID and pass that here every time. If no value is specified then a GUID is generated resulting in effectively a play session id. This value is ignored for web player which uses a session id.
 
 ```csharp
 bool UniversalAnalytics.initialized
