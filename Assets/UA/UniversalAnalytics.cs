@@ -17,9 +17,6 @@ public class UniversalAnalytics
     private static Dictionary<int, string> dimensions = new Dictionary<int, string>();
     private static Dictionary<int, int> metrics = new Dictionary<int, int>();
 
-    private static bool initialized = false;
-
-
     private const string UA_COLLECT_URL = "http://www.google-analytics.com/collect";
     private const int UA_EXCEPTION_DESC_LIMIT = 150;
 
@@ -396,4 +393,9 @@ public class UniversalAnalytics
         }
     }
     private static bool _gatherSystemInfo;
+
+    /*
+     * If Universal Analytics has been initialized.
+     * */
+    public static bool initialized { get; private set; }
 }
