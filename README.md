@@ -21,7 +21,13 @@ Easy :).
 
 ### General ###
 
-`void UniversalAnalytics.Initialize(string trackingId, string applicationName, string applicationVersion = "", string clientId = null)`
+```csharp
+void UniversalAnalytics.Initialize(
+    string trackingId, 
+    string applicationName, 
+    string applicationVersion = "", 
+    string clientId = null)
+```
 
 Initialize sets up all the data UAUnity will need to know for every log call. **This function must be called!**
 
@@ -33,52 +39,75 @@ Initialize sets up all the data UAUnity will need to know for every log call. **
 
 **string clientId** - The identification of the installed application. NOTE! This is not the user id (that isn't supported yet)! This is the id of specific installed application. On installation you could generate a GUID and pass that here every time. If no value is specific then a GUID is generated resulting in effectively a play session id. This value is ignored for web player which uses a session id.
 
-`bool UniversalAnalytics.initialized`
+```csharp
+bool UniversalAnalytics.initialized
+```
 
 Read only. Can query to see if UAUnity has already been initialized.
 
-`bool gatherSystemInformation`
+```csharp
+bool gatherSystemInformation
+```
 
 If set to true then will gather some data that is automatically supported by Universal Analytics. This data is screen resolution, viewport size, and system language. If more data is desired (such as platform information) then you'll have to set up your own data points and log them.
 
-`bool autoHandleExceptionLogging`
+```csharp
+bool autoHandleExceptionLogging
+```
 
 If this is set to true then UAUnity will attach itself to log information inside Unity. While listening, if it detects an exception then it will log an exception with as much description that it can to Universal Analytics. This is useful for see what and how many exceptions happen in the wild.
 
 ### Events ###
 
-`void UniversalAnalytics.LogEvent(string category, string action, string label, int value = 0)`
-`void UniversalAnalytics.LogEvent(string category, string action, int value = 0)`
+```csharp
+void UniversalAnalytics.LogEvent(
+    string category, 
+    string action, 
+    string label, 
+    int value = 0)
+    
+void UniversalAnalytics.LogEvent(
+    string category, 
+    string action, 
+    int value = 0)
+```
 
 Log Universal Analytics events. 
 https://developers.google.com/analytics/devguides/collection/analyticsjs/events
 
 ### Timing ###
 
-`void LogTiming(string category, string variableName, string label, int timeInMS)`
-`void LogTiming(string category, string variableName, int timeInMS)`
+```csharp
+void LogTiming(string category, string variableName, string label, int timeInMS)
+void LogTiming(string category, string variableName, int timeInMS)
+```
 
 Log Universal Analytics timing events. 
 https://developers.google.com/analytics/devguides/collection/analyticsjs/user-timings
 
 ### Dimensions and Metrics ###
 
-`void AddDimension(int index, string value)`
-`void AddMetric(int index, int value)`
+```csharp
+void AddDimension(int index, string value)
+void AddMetric(int index, int value)
+```
 
 Add Universal Analytics dimensions and metrics to the next log.
 https://developers.google.com/analytics/devguides/platform/customdimsmets-overview
 
 ### Exceptions ###
 
-`void LogException(string desc, bool isFatal = false)`
+```csharp
+void LogException(string desc, bool isFatal = false)
+```
 
 Log Universal Analytics exceptions. 
 https://developers.google.com/analytics/devguides/collection/analyticsjs/exceptions
 
 ## Example
 
-`using UnityEngine;
+```csharp
+using UnityEngine;
 using System.Collections;
 
 public class Example : MonoBehaviour
@@ -108,7 +137,8 @@ public class Example : MonoBehaviour
             return;
         }
 
-        // Construct version. Since everything is done via http requests, we'll put the platform in the version.
+        // Construct version. Since everything is done via http requests, we'll put 
+        // the platform in the version.
         string constructedVersion;
 
         if (Application.isEditor)
@@ -153,16 +183,25 @@ public class Example : MonoBehaviour
 
     void PlayerWon()
     {
-        UniversalAnalytics.LogEvent("Game", "Event", "Won (time)", (int)Time.timeSinceLevelLoad);
+        UniversalAnalytics.LogEvent(
+            "Game", 
+            "Event", 
+            "Won (time)", 
+            (int)Time.timeSinceLevelLoad);
     }
 
     void OnApplicationQuit()
     {
         // OnApplicationQuit may not be invoked in time in the web player!
         UniversalAnalytics.LogEvent("Game", "Player Stats", "Deaths", playerDeaths);
-        UniversalAnalytics.LogTiming("Game", "Lifetime", "End", (int)(Time.realtimeSinceStartup * 1000));
+        UniversalAnalytics.LogTiming(
+            "Game", 
+            "Lifetime", 
+            "End", 
+            (int)(Time.realtimeSinceStartup * 1000));
     }
-}`
+}
+```
 
 ## FAQ
 
