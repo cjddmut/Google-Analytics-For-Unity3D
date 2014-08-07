@@ -47,27 +47,24 @@ If this is set to true then UAUnity will attach itself to log information inside
 
 ### Events ###
 
-`void UniversalAnalytics.LogEvent(string category, string action, string label, int value = 0)
-
-void UniversalAnalytics.LogEvent(string category, string action, int value = 0)`
+`void UniversalAnalytics.LogEvent(string category, string action, string label, int value = 0)`
+`void UniversalAnalytics.LogEvent(string category, string action, int value = 0)`
 
 Log Universal Analytics events. 
 https://developers.google.com/analytics/devguides/collection/analyticsjs/events
 
 ### Timing ###
 
-`void LogTiming(string category, string variableName, string label, int timeInMS)
-
-void LogTiming(string category, string variableName, int timeInMS)`
+`void LogTiming(string category, string variableName, string label, int timeInMS)`
+`void LogTiming(string category, string variableName, int timeInMS)`
 
 Log Universal Analytics timing events. 
 https://developers.google.com/analytics/devguides/collection/analyticsjs/user-timings
 
 ### Dimensions and Metrics ###
 
-`void AddDimension(int index, string value)
-
-void AddMetric(int index, int value)`
+`void AddDimension(int index, string value)`
+`void AddMetric(int index, int value)`
 
 Add Universal Analytics dimensions and metrics to the next log.
 https://developers.google.com/analytics/devguides/platform/customdimsmets-overview
