@@ -1,14 +1,14 @@
 # Universal Analytics For Unity3D (UAUnity)
 ============================
 
+UAUnity provides a script interface to logging data for Google's [Universal Analytics](https://developers.google.com/analytics/).
+
+============================
+
 ####Obtain!####
 [Releases](https://github.com/cjddmut/Google-Universal-Analytics-For-Unity3D/releases)
 
 If you'd like the most up to date version (which is the most cool), then pull the repo or download it [here](https://github.com/cjddmut/Google-Universal-Analytics-For-Unity3D/archive/develop.zip) and copy the files in Assets to your project's Assets folder.
-
-============================
-
-UAUnity provides a script interface to logging data for Google's [Universal Analytics](https://developers.google.com/analytics/).
 
 ## Setup
 
