@@ -1,8 +1,10 @@
 # Universal Analytics For Unity3D (UAUnity)
 ============================
 
-####Versions####
-[0.1.0-beta (latest)](https://github.com/cjddmut/UniversalAnalyticsForUnity3D/releases/tag/v0.1.0-beta)
+####Obtain!####
+[Releases](https://github.com/cjddmut/Google-Universal-Analytics-For-Unity3D/releases)
+
+If you'd like the most up to date version (which is the most cool), then pull the repo or download it [here](https://github.com/cjddmut/Google-Universal-Analytics-For-Unity3D/archive/develop.zip) and copy the files in Assets to your project's Assets folder.
 
 If you are cool then you can use the latest dev version which can probably be found in the out folder at project root. While this package will be the most up to date package that I have built, it isn't guaranteed to have the absolute latest changes. To ensure you have the latest changes then pull the project and export the package.
 
