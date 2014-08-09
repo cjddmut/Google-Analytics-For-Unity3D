@@ -71,7 +71,7 @@ public class UniversalAnalytics
 
                 ga('create', '" + trackingId + @"', 'auto', {'name': 'unityUATracker'});
                 ga('unityUATracker.set', 'appName', '" + WebMakeStringSafe(appName) + @"');
-                ga('unityUATracker.set', 'appVer', '" + WebMakeStringSafe(appVersion) + @"');
+                ga('unityUATracker.set', 'appVersion', '" + WebMakeStringSafe(appVersion) + @"');
                 ");
         }
 
