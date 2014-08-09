@@ -1,7 +1,9 @@
 # Universal Analytics For Unity3D (UAUnity)
 ============================
 
-Latest version (dev): [0.1.0b](https://github.com/cjddmut/UniversalAnalyticsForUnity3D/blob/develop/out/UniversalAnalytics-0.1.0b.unitypackage?raw=true)
+Latest version (dev): [0.1.0b](https://github.com/cjddmut/UniversalAnalyticsForUnity3D/releases/tag/v0.1.0-beta)
+
+The latest dev version can most likey be found in the out folder at the project root. To be sure that you have the latest version then please pull the project and build a package yourself.
 
 ============================
 
