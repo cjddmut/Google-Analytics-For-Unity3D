@@ -90,8 +90,13 @@ public class UniversalAnalytics
 
         if (value < 0)
         {
-            Debug.LogWarning("Event value must be non-negative for logging events.");
+            Debug.LogWarning("UA: Event value must be non-negative for logging events.");
             return;
+        }
+
+        if (logToConsole)
+        {
+            Debug.Log("UA: Event (" + category + ", " + action + ", " + label + ", " + value + ")");
         }
 
         if (Application.isWebPlayer)
@@ -135,6 +140,11 @@ public class UniversalAnalytics
         if (!initialized)
         {
             return;
+        }
+
+        if (logToConsole)
+        {
+            Debug.Log("UA: Timing (" + category + ", " + variableName + ", " + label + ", " + timeInMS + ")");
         }
 
         if (Application.isWebPlayer)
@@ -181,8 +191,13 @@ public class UniversalAnalytics
         // We are limited to 150 characters. The post form is UTF8 so just count length.
         if (desc.Length > UA_EXCEPTION_DESC_LIMIT)
         {
-            Debug.LogWarning("Exception description surpasses 150 in length, truncating.");
+            Debug.LogWarning("UA: Exception description surpasses 150 in length, truncating.");
             desc = desc.Substring(0, UA_EXCEPTION_DESC_LIMIT);
+        }
+
+        if (logToConsole)
+        {
+            Debug.Log("UA: Exception (" + desc + ", " + isFatal + ")");
         }
 
         if (Application.isWebPlayer)
@@ -220,7 +235,7 @@ public class UniversalAnalytics
 
         if (index < 1 || index > 200)
         {
-            Debug.LogWarning("Dimension index has to be between 1 and 200.");
+            Debug.LogWarning("UA: Dimension index has to be between 1 and 200.");
             return;
         }
 
@@ -239,7 +254,7 @@ public class UniversalAnalytics
 
         if (index < 1 || index > 200)
         {
-            Debug.LogWarning("Metric index has to be between 1 and 200.");
+            Debug.LogWarning("UA: Metric index has to be between 1 and 200.");
             return;
         }
 
@@ -248,10 +263,15 @@ public class UniversalAnalytics
 
     private static void SendData(WWWForm data)
     {
+        LogDimensionsAndMetrics();
+
         // Internet connectivity?
         if (Application.internetReachability == NetworkReachability.NotReachable)
         {
             // Suck :(.
+            Debug.LogWarning("UA: Internet is not reachable!");
+            dimensions.Clear();
+            metrics.Clear();
             return;
         }
 
@@ -284,6 +304,40 @@ public class UniversalAnalytics
         metrics.Clear();
 
         new WWW(UA_COLLECT_URL, data);
+    }
+
+    private static void LogDimensionsAndMetrics()
+    {
+        if (logToConsole)
+        {
+            StringBuilder msg = new StringBuilder("UA: Adding Dimensions: {");
+
+            if (dimensions.Count > 0)
+            {
+                foreach (KeyValuePair<int, string> kv in dimensions)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+
+            if (metrics.Count > 0)
+            {
+                msg = new StringBuilder("UA: Adding Metrics: {");
+
+                foreach (KeyValuePair<int, int> kv in metrics)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+        }
     }
 
     private static string WebMakeStringSafe(string s)
@@ -393,6 +447,8 @@ public class UniversalAnalytics
         }
     }
     private static bool _gatherSystemInfo;
+
+    public static bool logToConsole { get; set; }
 
     /*
      * If Universal Analytics has been initialized.
