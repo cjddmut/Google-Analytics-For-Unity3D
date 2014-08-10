@@ -303,6 +303,11 @@ public class UniversalAnalytics
 
         metrics.Clear();
 
+        if (_uid != null && _uid != "")
+        {
+            data.AddField("uid", _uid);
+        }
+
         new WWW(UA_COLLECT_URL, data);
     }
 
@@ -454,4 +459,35 @@ public class UniversalAnalytics
      * If Universal Analytics has been initialized.
      * */
     public static bool initialized { get; private set; }
+
+    /*
+     * The id of the user, could be a login name. Set to null or an empty string to disable.
+     * */
+    public static string userId 
+    { 
+        get
+        {
+            return _uid;
+        }
+
+        set
+        {
+            _uid = value;
+
+            if (Application.isWebPlayer)
+            {
+                if (_uid == null)
+                {
+                    // TODO: I don't know if this actually unsets it...
+                    Application.ExternalEval("ga('set', 'userId', '');");
+                }
+                else
+                {
+                    Application.ExternalEval("ga('set', 'userId', '" + _uid + "');");
+                }
+            }
+        }
+    }
+    private static string _uid;
+
 }
