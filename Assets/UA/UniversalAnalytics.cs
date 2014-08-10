@@ -78,6 +78,32 @@ public class UniversalAnalytics
         initialized = true;
     }
 
+    public static void LogScreenView(string screenName)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (logToConsole)
+        {
+            Debug.Log("UA: ScreenView (" + screenName + ")");
+        }
+
+        if (Application.isWebPlayer)
+        {
+            Application.ExternalEval("ga('unityUATracker.send', 'screenview', {'screenName': '" + WebMakeStringSafe(screenName) + "'});");
+        }
+        else
+        {
+            // Everything else!
+            WWWForm data = new WWWForm();
+            data.AddField("t", "screenview");
+            data.AddField("cd", screenName);
+            SendData(data);
+        }
+    }
+
     /*
      * https://developers.google.com/analytics/devguides/collection/analyticsjs/events
      * */
@@ -427,12 +453,12 @@ public class UniversalAnalytics
         }
         set
         {
+            _gatherSystemInfo = value;
+
             if (!initialized)
             {
                 return;
             }
-
-            _gatherSystemInfo = value;
 
             if (_gatherSystemInfo)
             {
@@ -474,16 +500,21 @@ public class UniversalAnalytics
         {
             _uid = value;
 
+            if (!initialized)
+            {
+                return;
+            }
+
             if (Application.isWebPlayer)
             {
                 if (_uid == null)
                 {
                     // TODO: I don't know if this actually unsets it...
-                    Application.ExternalEval("ga('set', 'userId', '');");
+                    Application.ExternalEval("ga('unityUATracker.set', 'userId', '');");
                 }
                 else
                 {
-                    Application.ExternalEval("ga('set', 'userId', '" + _uid + "');");
+                    Application.ExternalEval("ga('unityUATracker.set', 'userId', '" + WebMakeStringSafe(_uid) + "');");
                 }
             }
         }
