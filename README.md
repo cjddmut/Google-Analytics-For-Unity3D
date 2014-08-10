@@ -10,6 +10,8 @@ UAUnity provides a script interface to logging data for Google's [Universal Anal
 
 If you'd like the most up to date version (which is the most cool), then pull the repo or download it [here](https://github.com/cjddmut/Google-Universal-Analytics-For-Unity3D/archive/develop.zip) and copy the files in Assets to your project's Assets folder.
 
+[Planned Features](https://github.com/cjddmut/Google-Universal-Analytics-For-Unity3D/wiki/Development-Roadmap)
+
 ## Setup
 
 First you'll have to [set up an account](https://support.google.com/analytics/answer/2817075?hl=en) with Google's Universal Analytics. Be sure to set up the property that you are tacking as a mobile app instead of a website, this way you can have an application name. Once you have a tracking id and application name, you are ready to start using UAUnity!
