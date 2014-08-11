@@ -235,8 +235,6 @@ public class UniversalAnalytics
                     " + WebConstructExtraArgs() + @"
                     });
                 ");
-
-            //Application.ExternalEval(desc.Replace("'", "\\'"));
         }
         else
         {
