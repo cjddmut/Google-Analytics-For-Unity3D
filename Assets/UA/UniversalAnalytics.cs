@@ -17,6 +17,9 @@ public class UniversalAnalytics
     private static Dictionary<int, string> dimensions = new Dictionary<int, string>();
     private static Dictionary<int, int> metrics = new Dictionary<int, int>();
 
+    private static Dictionary<int, string> setDimensions = new Dictionary<int, string>();
+    private static Dictionary<int, int> setMetrics = new Dictionary<int, int>();
+
     private const string UA_COLLECT_URL = "http://www.google-analytics.com/collect";
     private const int UA_EXCEPTION_DESC_LIMIT = 150;
 
@@ -78,6 +81,9 @@ public class UniversalAnalytics
         initialized = true;
     }
 
+    /**
+     * https://developers.google.com/analytics/devguides/collection/analyticsjs/screens
+     * */
     public static void LogScreenView(string screenName)
     {
         if (!initialized)
@@ -248,7 +254,9 @@ public class UniversalAnalytics
     }
 
     /*
-     * https://developers.google.com/analytics/devguides/platform/customdimsmets-overview
+     * Only exists until the next hit!
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
      * */
     public static void AddDimension(int index, string value)
     {
@@ -266,8 +274,58 @@ public class UniversalAnalytics
         dimensions[index] = value;
     }
 
-    /*
-     * https://developers.google.com/analytics/devguides/platform/customdimsmets-overview
+    /**
+     * This will be sent with every log until unset. Used for session or user dimensions.
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
+     * */
+    public static void SetDimension(int index, string value)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (index < 1 || index > 200)
+        {
+            Debug.LogWarning("UA: Dimension index has to be between 1 and 200.");
+            return;
+        }
+
+        setDimensions[index] = value;
+
+        if (Application.isWebPlayer)
+        {
+            Application.ExternalEval("ga('set', 'dimension" + index + "', '" + value + "' );");
+        }
+    }
+
+    public static void UnsetDimension(int index)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (!setDimensions.ContainsKey(index))
+        {
+            Debug.LogWarning("UA: Set dimensions does not contain an index " + index + " to unset.");
+            return;
+        }
+
+        setDimensions.Remove(index);
+
+        if (Application.isWebPlayer)
+        {
+            // TODO: I don't actually know if this appropriately unsets anything...
+            Application.ExternalEval("ga('set', 'dimension" + index + "', '' );");
+        }
+    }
+
+    /* 
+     * Only exists until the next hit!
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
      * */
     public static void AddMetric(int index, int value)
     {
@@ -283,6 +341,54 @@ public class UniversalAnalytics
         }
 
         metrics[index] = value;
+    }
+
+    /**
+     * This will be sent with every log until unset. Used for session or user metrics.
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
+     * */
+    public static void SetMetric(int index, int value)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (index < 1 || index > 200)
+        {
+            Debug.LogWarning("UA: Metric index has to be between 1 and 200.");
+            return;
+        }
+
+        setMetrics[index] = value;
+
+        if (Application.isWebPlayer)
+        {
+            Application.ExternalEval("ga('set', 'metric" + index + "', " + value + " );");
+        }
+    }
+
+    public static void UnsetMetric(int index)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (!setMetrics.ContainsKey(index))
+        {
+            Debug.LogWarning("UA: Set metric does not contain an index " + index + " to unset.");
+            return;
+        }
+
+        setMetrics.Remove(index);
+
+        if (Application.isWebPlayer)
+        {
+            // TODO: I don't actually know if this appropriately unsets anything...
+            Application.ExternalEval("ga('set', 'metric" + index + "', 0 );");
+        }
     }
 
     private static void SendData(WWWForm data)
@@ -327,6 +433,17 @@ public class UniversalAnalytics
 
         metrics.Clear();
 
+        // Add the persistent dimensions and metrics
+        foreach (KeyValuePair<int, string> kv in setDimensions)
+        {
+            data.AddField("cd" + kv.Key, kv.Value);
+        }
+
+        foreach (KeyValuePair<int, int> kv in setMetrics)
+        {
+            data.AddField("cm" + kv.Key, kv.Value);
+        }
+
         if (_uid != null && _uid != "")
         {
             data.AddField("uid", _uid);
@@ -366,6 +483,35 @@ public class UniversalAnalytics
                 msg.Append("}");
                 Debug.Log(msg.ToString());
             }
+
+            if (setDimensions.Count > 0)
+            {
+                msg = new StringBuilder("UA: Adding Persistent Dimensions: {");
+
+                foreach (KeyValuePair<int, string> kv in setDimensions)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+
+            if (setMetrics.Count > 0)
+            {
+                msg = new StringBuilder("UA: Adding Persistent Metrics: {");
+
+                foreach (KeyValuePair<int, int> kv in setMetrics)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+
         }
     }
 
