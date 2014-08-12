@@ -20,6 +20,14 @@ public class UniversalAnalytics
     private static Dictionary<int, string> setDimensions = new Dictionary<int, string>();
     private static Dictionary<int, int> setMetrics = new Dictionary<int, int>();
 
+    private static SessionAction sessionAction = SessionAction.None;
+    private enum SessionAction
+    {
+        None,
+        Start,
+        End
+    }
+
     private const string UA_COLLECT_URL = "http://www.google-analytics.com/collect";
     private const int UA_EXCEPTION_DESC_LIMIT = 150;
 
@@ -391,9 +399,25 @@ public class UniversalAnalytics
         }
     }
 
+    public static void StartSessionOnNextHit()
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        sessionAction = SessionAction.Start;
+    }
+
+    public static void EndSessionOnNextHit()
+    {
+        sessionAction = SessionAction.End;
+    }
+
     private static void SendData(WWWForm data)
     {
         LogDimensionsAndMetrics();
+        LogSession();
 
         // Internet connectivity?
         if (Application.internetReachability == NetworkReachability.NotReachable)
@@ -449,7 +473,33 @@ public class UniversalAnalytics
             data.AddField("uid", _uid);
         }
 
+        if (sessionAction == SessionAction.Start)
+        {
+            data.AddField("sc", "start");
+        }
+        else if (sessionAction == SessionAction.End)
+        {
+            data.AddField("sc", "end");
+        }
+
+        sessionAction = SessionAction.None;
+
         new WWW(UA_COLLECT_URL, data);
+    }
+
+    private static void LogSession()
+    {
+        if (logToConsole)
+        {
+            if (sessionAction == SessionAction.Start)
+            {
+                Debug.Log("UA: Starting Session");
+            }
+            else if (sessionAction == SessionAction.End)
+            {
+                Debug.Log("UA: Ending Session");
+            }
+        }
     }
 
     private static void LogDimensionsAndMetrics()
@@ -542,6 +592,18 @@ public class UniversalAnalytics
         }
 
         metrics.Clear();
+
+        // Session
+        if (sessionAction == SessionAction.Start)
+        {
+            strb.Append(",'sessionControl': 'start'");
+        }
+        else if (sessionAction == SessionAction.End)
+        {
+            strb.Append(",'sessionControl': 'end'");
+        }
+
+        sessionAction = SessionAction.None;
 
         return strb.ToString();
     }
