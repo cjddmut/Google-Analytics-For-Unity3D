@@ -36,6 +36,7 @@ public class TestScript : MonoBehaviour
             UniversalAnalytics.gatherSystemInformation = true;
             UniversalAnalytics.autoHandleExceptionLogging = true;
             UniversalAnalytics.logToConsole = true;
+            UniversalAnalytics.queueLogs = true;
         }
     }
 
@@ -46,6 +47,11 @@ public class TestScript : MonoBehaviour
     public void TestSceenView()
     {
         UniversalAnalytics.LogScreenView("ScreenViewTest");
+    }
+
+    public void TestSceenView2()
+    {
+        UniversalAnalytics.LogScreenView("ScreenViewTest2");
     }
 
     //

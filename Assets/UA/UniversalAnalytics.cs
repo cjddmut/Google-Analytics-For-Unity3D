@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using UA;
 
 public class UniversalAnalytics
 {
@@ -21,6 +22,8 @@ public class UniversalAnalytics
     private static Dictionary<int, int> setMetrics = new Dictionary<int, int>();
 
     private static SessionAction sessionAction = SessionAction.None;
+
+
     private enum SessionAction
     {
         None,
@@ -28,7 +31,7 @@ public class UniversalAnalytics
         End
     }
 
-    private const string UA_COLLECT_URL = "http://www.google-analytics.com/collect";
+    public const string UA_COLLECT_URL = "http://www.google-analytics.com/collect";
     private const int UA_EXCEPTION_DESC_LIMIT = 150;
 
     /*
@@ -71,7 +74,7 @@ public class UniversalAnalytics
         {
             // Since we do not have a Crossdomain.xml file on the google server, we'll have to use eval functions
             // to send information to google.
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 if (typeof ga == 'undefined') {
                     console.log('creating analytics');
                     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -106,7 +109,7 @@ public class UniversalAnalytics
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval("ga('unityUATracker.send', 'screenview', {'screenName': '" + WebMakeStringSafe(screenName) + "'});");
+            WebPlayerEval("ga('unityUATracker.send', 'screenview', {'screenName': '" + WebMakeStringSafe(screenName) + "'});");
         }
         else
         {
@@ -141,7 +144,7 @@ public class UniversalAnalytics
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 ga('unityUATracker.send', {
                     'hitType': 'event',
                     'eventCategory': '" + WebMakeStringSafe(category) + @"',
@@ -189,7 +192,7 @@ public class UniversalAnalytics
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 ga('unityUATracker.send', {
                     'hitType': 'timing',
                     'timingCategory': '" + WebMakeStringSafe(category) + @"',
@@ -242,7 +245,7 @@ public class UniversalAnalytics
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 ga('unityUATracker.send', 'exception', {
                     'exDescription': '" + WebMakeStringSafe(desc) + @"',
                     'exFatal': " + (isFatal ? "true" : "false") + @"
@@ -304,7 +307,7 @@ public class UniversalAnalytics
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval("ga('set', 'dimension" + index + "', '" + value + "' );");
+            WebPlayerEval("ga('set', 'dimension" + index + "', '" + value + "' );");
         }
     }
 
@@ -326,7 +329,7 @@ public class UniversalAnalytics
         if (Application.isWebPlayer)
         {
             // TODO: I don't actually know if this appropriately unsets anything...
-            Application.ExternalEval("ga('set', 'dimension" + index + "', '' );");
+            WebPlayerEval("ga('set', 'dimension" + index + "', '' );");
         }
     }
 
@@ -373,7 +376,7 @@ public class UniversalAnalytics
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval("ga('set', 'metric" + index + "', " + value + " );");
+            WebPlayerEval("ga('set', 'metric" + index + "', " + value + " );");
         }
     }
 
@@ -395,7 +398,7 @@ public class UniversalAnalytics
         if (Application.isWebPlayer)
         {
             // TODO: I don't actually know if this appropriately unsets anything...
-            Application.ExternalEval("ga('set', 'metric" + index + "', 0 );");
+            WebPlayerEval("ga('set', 'metric" + index + "', 0 );");
         }
     }
 
@@ -418,16 +421,6 @@ public class UniversalAnalytics
     {
         LogDimensionsAndMetrics();
         LogSession();
-
-        // Internet connectivity?
-        if (Application.internetReachability == NetworkReachability.NotReachable)
-        {
-            // Suck :(.
-            Debug.LogWarning("UA: Internet is not reachable!");
-            dimensions.Clear();
-            metrics.Clear();
-            return;
-        }
 
         // Add default values.
         data.AddField("v", "1");
@@ -484,7 +477,20 @@ public class UniversalAnalytics
 
         sessionAction = SessionAction.None;
 
-        new WWW(UA_COLLECT_URL, data);
+        if (queueLogs)
+        {
+            logQueuer.SendData(data);
+        }
+        else
+        {
+            new WWW(UA_COLLECT_URL, data);
+        }
+    }
+
+    private static void WebPlayerEval(string eval)
+    {
+        // On webplayer we can't determine reliably if we're connected so we just hope.
+        Application.ExternalEval(eval);
     }
 
     private static void LogSession()
@@ -674,7 +680,7 @@ public class UniversalAnalytics
 
                 if (Application.isWebPlayer)
                 {
-                    Application.ExternalEval(@"
+                    WebPlayerEval(@"
                         ga('unityUATracker.set', 'screenResolution', '" + screenResolution + @"');
                         ga('unityUATracker.set', 'viewportSize', '" + viewportSize + @"');
                         ga('unityUATracker.set', 'language', '" + systemLanguage + @"');
@@ -716,15 +722,34 @@ public class UniversalAnalytics
                 if (_uid == null)
                 {
                     // TODO: I don't know if this actually unsets it...
-                    Application.ExternalEval("ga('unityUATracker.set', 'userId', '');");
+                    WebPlayerEval("ga('unityUATracker.set', 'userId', '');");
                 }
                 else
                 {
-                    Application.ExternalEval("ga('unityUATracker.set', 'userId', '" + WebMakeStringSafe(_uid) + "');");
+                    WebPlayerEval("ga('unityUATracker.set', 'userId', '" + WebMakeStringSafe(_uid) + "');");
                 }
             }
         }
     }
     private static string _uid;
 
+    public static bool queueLogs { get; set; }
+
+    private static LogQueue logQueuer
+    {
+        get
+        {
+            if (_logQueuer == null)
+            {
+                GameObject obj = new GameObject();
+                obj.name = "Universal Analytics Queuer";
+                _logQueuer = obj.AddComponent<LogQueue>();
+                //obj.hideFlags |= HideFlags.HideAndDontSave;
+            }
+
+            return _logQueuer;
+        }
+    }
+
+    private static LogQueue _logQueuer;
 }
