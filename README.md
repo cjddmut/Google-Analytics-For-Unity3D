@@ -3,7 +3,7 @@
 
 <!---%=description%-->
 
-UAUnity provides a script interface to logging data for Google's [Universal Analytics](https://developers.google.com/analytics/).
+A scripting interface for Unity3D that allows logging to Google's [Universal Analytics](https://developers.google.com/analytics/). Works on all platforms including Web Player. 
 
 <!---%=obtain%-->
 
