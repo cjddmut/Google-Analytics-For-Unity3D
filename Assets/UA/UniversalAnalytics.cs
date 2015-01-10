@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using UA;
 
 public class UniversalAnalytics
 {
@@ -17,7 +18,20 @@ public class UniversalAnalytics
     private static Dictionary<int, string> dimensions = new Dictionary<int, string>();
     private static Dictionary<int, int> metrics = new Dictionary<int, int>();
 
-    private const string UA_COLLECT_URL = "http://www.google-analytics.com/collect";
+    private static Dictionary<int, string> setDimensions = new Dictionary<int, string>();
+    private static Dictionary<int, int> setMetrics = new Dictionary<int, int>();
+
+    private static SessionAction sessionAction = SessionAction.None;
+
+
+    private enum SessionAction
+    {
+        None,
+        Start,
+        End
+    }
+
+    public const string UA_COLLECT_URL = "http://www.google-analytics.com/collect";
     private const int UA_EXCEPTION_DESC_LIMIT = 150;
 
     /*
@@ -60,7 +74,7 @@ public class UniversalAnalytics
         {
             // Since we do not have a Crossdomain.xml file on the google server, we'll have to use eval functions
             // to send information to google.
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 if (typeof ga == 'undefined') {
                     console.log('creating analytics');
                     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -78,6 +92,35 @@ public class UniversalAnalytics
         initialized = true;
     }
 
+    /**
+     * https://developers.google.com/analytics/devguides/collection/analyticsjs/screens
+     * */
+    public static void LogScreenView(string screenName)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (logToConsole)
+        {
+            Debug.Log("UA: ScreenView (" + screenName + ")");
+        }
+
+        if (Application.isWebPlayer)
+        {
+            WebPlayerEval("ga('unityUATracker.send', 'screenview', {'screenName': '" + WebMakeStringSafe(screenName) + "'});");
+        }
+        else
+        {
+            // Everything else!
+            WWWForm data = new WWWForm();
+            data.AddField("t", "screenview");
+            data.AddField("cd", screenName);
+            SendData(data);
+        }
+    }
+
     /*
      * https://developers.google.com/analytics/devguides/collection/analyticsjs/events
      * */
@@ -90,13 +133,18 @@ public class UniversalAnalytics
 
         if (value < 0)
         {
-            Debug.LogWarning("Event value must be non-negative for logging events.");
+            Debug.LogWarning("UA: Event value must be non-negative for logging events.");
             return;
+        }
+
+        if (logToConsole)
+        {
+            Debug.Log("UA: Event (" + category + ", " + action + ", " + label + ", " + value + ")");
         }
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 ga('unityUATracker.send', {
                     'hitType': 'event',
                     'eventCategory': '" + WebMakeStringSafe(category) + @"',
@@ -137,9 +185,14 @@ public class UniversalAnalytics
             return;
         }
 
+        if (logToConsole)
+        {
+            Debug.Log("UA: Timing (" + category + ", " + variableName + ", " + label + ", " + timeInMS + ")");
+        }
+
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 ga('unityUATracker.send', {
                     'hitType': 'timing',
                     'timingCategory': '" + WebMakeStringSafe(category) + @"',
@@ -181,21 +234,24 @@ public class UniversalAnalytics
         // We are limited to 150 characters. The post form is UTF8 so just count length.
         if (desc.Length > UA_EXCEPTION_DESC_LIMIT)
         {
-            Debug.LogWarning("Exception description surpasses 150 in length, truncating.");
+            Debug.LogWarning("UA: Exception description surpasses 150 in length, truncating.");
             desc = desc.Substring(0, UA_EXCEPTION_DESC_LIMIT);
+        }
+
+        if (logToConsole)
+        {
+            Debug.Log("UA: Exception (" + desc + ", " + isFatal + ")");
         }
 
         if (Application.isWebPlayer)
         {
-            Application.ExternalEval(@"
+            WebPlayerEval(@"
                 ga('unityUATracker.send', 'exception', {
                     'exDescription': '" + WebMakeStringSafe(desc) + @"',
                     'exFatal': " + (isFatal ? "true" : "false") + @"
                     " + WebConstructExtraArgs() + @"
                     });
                 ");
-
-            //Application.ExternalEval(desc.Replace("'", "\\'"));
         }
         else
         {
@@ -209,7 +265,9 @@ public class UniversalAnalytics
     }
 
     /*
-     * https://developers.google.com/analytics/devguides/platform/customdimsmets-overview
+     * Only exists until the next hit!
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
      * */
     public static void AddDimension(int index, string value)
     {
@@ -220,15 +278,65 @@ public class UniversalAnalytics
 
         if (index < 1 || index > 200)
         {
-            Debug.LogWarning("Dimension index has to be between 1 and 200.");
+            Debug.LogWarning("UA: Dimension index has to be between 1 and 200.");
             return;
         }
 
         dimensions[index] = value;
     }
 
-    /*
-     * https://developers.google.com/analytics/devguides/platform/customdimsmets-overview
+    /**
+     * This will be sent with every log until unset. Used for session or user dimensions.
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
+     * */
+    public static void SetDimension(int index, string value)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (index < 1 || index > 200)
+        {
+            Debug.LogWarning("UA: Dimension index has to be between 1 and 200.");
+            return;
+        }
+
+        setDimensions[index] = value;
+
+        if (Application.isWebPlayer)
+        {
+            WebPlayerEval("ga('set', 'dimension" + index + "', '" + value + "' );");
+        }
+    }
+
+    public static void UnsetDimension(int index)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (!setDimensions.ContainsKey(index))
+        {
+            Debug.LogWarning("UA: Set dimensions does not contain an index " + index + " to unset.");
+            return;
+        }
+
+        setDimensions.Remove(index);
+
+        if (Application.isWebPlayer)
+        {
+            // TODO: I don't actually know if this appropriately unsets anything...
+            WebPlayerEval("ga('set', 'dimension" + index + "', '' );");
+        }
+    }
+
+    /* 
+     * Only exists until the next hit!
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
      * */
     public static void AddMetric(int index, int value)
     {
@@ -239,21 +347,80 @@ public class UniversalAnalytics
 
         if (index < 1 || index > 200)
         {
-            Debug.LogWarning("Metric index has to be between 1 and 200.");
+            Debug.LogWarning("UA: Metric index has to be between 1 and 200.");
             return;
         }
 
         metrics[index] = value;
     }
 
-    private static void SendData(WWWForm data)
+    /**
+     * This will be sent with every log until unset. Used for session or user metrics.
+     * 
+     * https://developers.google.com/analytics/devguides/platform/customdimsmets
+     * */
+    public static void SetMetric(int index, int value)
     {
-        // Internet connectivity?
-        if (Application.internetReachability == NetworkReachability.NotReachable)
+        if (!initialized)
         {
-            // Suck :(.
             return;
         }
+
+        if (index < 1 || index > 200)
+        {
+            Debug.LogWarning("UA: Metric index has to be between 1 and 200.");
+            return;
+        }
+
+        setMetrics[index] = value;
+
+        if (Application.isWebPlayer)
+        {
+            WebPlayerEval("ga('set', 'metric" + index + "', " + value + " );");
+        }
+    }
+
+    public static void UnsetMetric(int index)
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        if (!setMetrics.ContainsKey(index))
+        {
+            Debug.LogWarning("UA: Set metric does not contain an index " + index + " to unset.");
+            return;
+        }
+
+        setMetrics.Remove(index);
+
+        if (Application.isWebPlayer)
+        {
+            // TODO: I don't actually know if this appropriately unsets anything...
+            WebPlayerEval("ga('set', 'metric" + index + "', 0 );");
+        }
+    }
+
+    public static void StartSessionOnNextHit()
+    {
+        if (!initialized)
+        {
+            return;
+        }
+
+        sessionAction = SessionAction.Start;
+    }
+
+    public static void EndSessionOnNextHit()
+    {
+        sessionAction = SessionAction.End;
+    }
+
+    private static void SendData(WWWForm data)
+    {
+        LogDimensionsAndMetrics();
+        LogSession();
 
         // Add default values.
         data.AddField("v", "1");
@@ -283,7 +450,125 @@ public class UniversalAnalytics
 
         metrics.Clear();
 
-        new WWW(UA_COLLECT_URL, data);
+        // Add the persistent dimensions and metrics
+        foreach (KeyValuePair<int, string> kv in setDimensions)
+        {
+            data.AddField("cd" + kv.Key, kv.Value);
+        }
+
+        foreach (KeyValuePair<int, int> kv in setMetrics)
+        {
+            data.AddField("cm" + kv.Key, kv.Value);
+        }
+
+        if (_uid != null && _uid != "")
+        {
+            data.AddField("uid", _uid);
+        }
+
+        if (sessionAction == SessionAction.Start)
+        {
+            data.AddField("sc", "start");
+        }
+        else if (sessionAction == SessionAction.End)
+        {
+            data.AddField("sc", "end");
+        }
+
+        sessionAction = SessionAction.None;
+
+        if (queueLogs)
+        {
+            logQueuer.SendData(data);
+        }
+        else
+        {
+            new WWW(UA_COLLECT_URL, data);
+        }
+    }
+
+    private static void WebPlayerEval(string eval)
+    {
+        // On webplayer we can't determine reliably if we're connected so we just hope.
+        Application.ExternalEval(eval);
+    }
+
+    private static void LogSession()
+    {
+        if (logToConsole)
+        {
+            if (sessionAction == SessionAction.Start)
+            {
+                Debug.Log("UA: Starting Session");
+            }
+            else if (sessionAction == SessionAction.End)
+            {
+                Debug.Log("UA: Ending Session");
+            }
+        }
+    }
+
+    private static void LogDimensionsAndMetrics()
+    {
+        if (logToConsole)
+        {
+            StringBuilder msg = new StringBuilder("UA: Adding Dimensions: {");
+
+            if (dimensions.Count > 0)
+            {
+                foreach (KeyValuePair<int, string> kv in dimensions)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+
+            if (metrics.Count > 0)
+            {
+                msg = new StringBuilder("UA: Adding Metrics: {");
+
+                foreach (KeyValuePair<int, int> kv in metrics)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+
+            if (setDimensions.Count > 0)
+            {
+                msg = new StringBuilder("UA: Adding Persistent Dimensions: {");
+
+                foreach (KeyValuePair<int, string> kv in setDimensions)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+
+            if (setMetrics.Count > 0)
+            {
+                msg = new StringBuilder("UA: Adding Persistent Metrics: {");
+
+                foreach (KeyValuePair<int, int> kv in setMetrics)
+                {
+                    msg.Append(kv.Key + ": " + kv.Value + ", ");
+                }
+
+                msg.Remove(msg.Length - 2, 2);
+                msg.Append("}");
+                Debug.Log(msg.ToString());
+            }
+
+        }
     }
 
     private static string WebMakeStringSafe(string s)
@@ -313,6 +598,18 @@ public class UniversalAnalytics
         }
 
         metrics.Clear();
+
+        // Session
+        if (sessionAction == SessionAction.Start)
+        {
+            strb.Append(",'sessionControl': 'start'");
+        }
+        else if (sessionAction == SessionAction.End)
+        {
+            strb.Append(",'sessionControl': 'end'");
+        }
+
+        sessionAction = SessionAction.None;
 
         return strb.ToString();
     }
@@ -368,12 +665,12 @@ public class UniversalAnalytics
         }
         set
         {
+            _gatherSystemInfo = value;
+
             if (!initialized)
             {
                 return;
             }
-
-            _gatherSystemInfo = value;
 
             if (_gatherSystemInfo)
             {
@@ -383,7 +680,7 @@ public class UniversalAnalytics
 
                 if (Application.isWebPlayer)
                 {
-                    Application.ExternalEval(@"
+                    WebPlayerEval(@"
                         ga('unityUATracker.set', 'screenResolution', '" + screenResolution + @"');
                         ga('unityUATracker.set', 'viewportSize', '" + viewportSize + @"');
                         ga('unityUATracker.set', 'language', '" + systemLanguage + @"');
@@ -394,8 +691,65 @@ public class UniversalAnalytics
     }
     private static bool _gatherSystemInfo;
 
+    public static bool logToConsole { get; set; }
+
     /*
      * If Universal Analytics has been initialized.
      * */
     public static bool initialized { get; private set; }
+
+    /*
+     * The id of the user, could be a login name. Set to null or an empty string to disable.
+     * */
+    public static string userId 
+    { 
+        get
+        {
+            return _uid;
+        }
+
+        set
+        {
+            _uid = value;
+
+            if (!initialized)
+            {
+                return;
+            }
+
+            if (Application.isWebPlayer)
+            {
+                if (_uid == null)
+                {
+                    // TODO: I don't know if this actually unsets it...
+                    WebPlayerEval("ga('unityUATracker.set', 'userId', '');");
+                }
+                else
+                {
+                    WebPlayerEval("ga('unityUATracker.set', 'userId', '" + WebMakeStringSafe(_uid) + "');");
+                }
+            }
+        }
+    }
+    private static string _uid;
+
+    public static bool queueLogs { get; set; }
+
+    private static LogQueue logQueuer
+    {
+        get
+        {
+            if (_logQueuer == null)
+            {
+                GameObject obj = new GameObject();
+                obj.name = "Universal Analytics Queuer";
+                _logQueuer = obj.AddComponent<LogQueue>();
+                //obj.hideFlags |= HideFlags.HideAndDontSave;
+            }
+
+            return _logQueuer;
+        }
+    }
+
+    private static LogQueue _logQueuer;
 }
