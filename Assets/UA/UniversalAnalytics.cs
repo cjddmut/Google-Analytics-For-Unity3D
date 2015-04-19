@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UA;
@@ -64,13 +63,13 @@ public class UniversalAnalytics
         appName = applicationName;
         appVersion = applicationVersion;
 
-        if (!Application.isWebPlayer && clientId == null)
+        if (!(Application.isWebPlayer  || Application.platform == RuntimePlatform.WebGLPlayer) && clientId == null)
         {
             // Generate a unique id for this client session.
             cid = System.Guid.NewGuid().ToString();
         }
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             // Since we do not have a Crossdomain.xml file on the google server, we'll have to use eval functions
             // to send information to google.
@@ -107,7 +106,7 @@ public class UniversalAnalytics
             Debug.Log("UA: ScreenView (" + screenName + ")");
         }
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             WebPlayerEval("ga('unityUATracker.send', 'screenview', {'screenName': '" + WebMakeStringSafe(screenName) + "'});");
         }
@@ -142,7 +141,7 @@ public class UniversalAnalytics
             Debug.Log("UA: Event (" + category + ", " + action + ", " + label + ", " + value + ")");
         }
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             WebPlayerEval(@"
                 ga('unityUATracker.send', {
@@ -190,7 +189,7 @@ public class UniversalAnalytics
             Debug.Log("UA: Timing (" + category + ", " + variableName + ", " + label + ", " + timeInMS + ")");
         }
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             WebPlayerEval(@"
                 ga('unityUATracker.send', {
@@ -243,7 +242,7 @@ public class UniversalAnalytics
             Debug.Log("UA: Exception (" + desc + ", " + isFatal + ")");
         }
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             WebPlayerEval(@"
                 ga('unityUATracker.send', 'exception', {
@@ -305,7 +304,7 @@ public class UniversalAnalytics
 
         setDimensions[index] = value;
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             WebPlayerEval("ga('set', 'dimension" + index + "', '" + value + "' );");
         }
@@ -326,7 +325,7 @@ public class UniversalAnalytics
 
         setDimensions.Remove(index);
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             // TODO: I don't actually know if this appropriately unsets anything...
             WebPlayerEval("ga('set', 'dimension" + index + "', '' );");
@@ -374,7 +373,7 @@ public class UniversalAnalytics
 
         setMetrics[index] = value;
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             WebPlayerEval("ga('set', 'metric" + index + "', " + value + " );");
         }
@@ -395,7 +394,7 @@ public class UniversalAnalytics
 
         setMetrics.Remove(index);
 
-        if (Application.isWebPlayer)
+        if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             // TODO: I don't actually know if this appropriately unsets anything...
             WebPlayerEval("ga('set', 'metric" + index + "', 0 );");
@@ -642,11 +641,11 @@ public class UniversalAnalytics
 
             if (value && value != _autoExceptionLog)
             {
-                Application.RegisterLogCallback(HandleException);
+                Application.logMessageReceived += HandleException;
             }
             else if (!value && value != _autoExceptionLog)
             {
-                Application.RegisterLogCallback(null);
+                Application.logMessageReceived -= HandleException;
             }
 
             _autoExceptionLog = value;
@@ -678,7 +677,7 @@ public class UniversalAnalytics
                 viewportSize = Screen.currentResolution.width + "x" + Screen.currentResolution.height;
                 systemLanguage = Application.systemLanguage.ToString();
 
-                if (Application.isWebPlayer)
+                if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
                 {
                     WebPlayerEval(@"
                         ga('unityUATracker.set', 'screenResolution', '" + screenResolution + @"');
@@ -717,7 +716,7 @@ public class UniversalAnalytics
                 return;
             }
 
-            if (Application.isWebPlayer)
+            if (Application.isWebPlayer || Application.platform == RuntimePlatform.WebGLPlayer)
             {
                 if (_uid == null)
                 {
