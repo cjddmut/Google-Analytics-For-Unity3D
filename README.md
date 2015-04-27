@@ -1,6 +1,8 @@
 # Universal Analytics For Unity3D (UAUnity)
 ============================
 
+THIS PROJECT IS DEPRECATED AND NO LONGER BEING WORKED ON! Google released their own [analytics package](https://developers.google.com/analytics/devguides/collection/unity/v3/devguide) which sort of obsoletes this one :P
+
 <!---%=description%-->
 
 A scripting interface for Unity3D that allows logging to Google's [Universal Analytics](https://developers.google.com/analytics/). Works on all platforms including Web Player. 
